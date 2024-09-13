@@ -1,0 +1,50 @@
+-- This query retrieves the configuration of operating system authentication prefixes and remote OS authentication.
+-- It's important to review these settings as they control how Oracle interacts with OS-level authentication, which can have security implications.
+
+SELECT * FROM V$PARAMETER
+WHERE name = 'os_authent_prefix'
+      OR name = 'remote_os_authent';
+
+-- This query retrieves the configuration of operating system roles and remote OS roles.
+-- OS roles should be carefully managed, and remote OS role management should typically be disabled to prevent security risks.
+
+SELECT * FROM V$PARAMETER
+WHERE name = 'os_roles'
+     OR name = 'remote_os_roles';
+
+-- This query lists all users in the database.
+-- Regularly reviewing the list of database users helps ensure that only authorized users have access and that accounts are managed according to security policies.
+
+SELECT * FROM DBA_USERS;
+
+-- This query lists all profiles in the database, which are collections of resource limits and password parameters for users.
+-- Reviewing profiles helps ensure that they are configured to enforce security policies, such as password complexity and resource usage limits.
+
+SELECT * FROM DBA_PROFILES;
+
+-- This query retrieves the source code for password verification functions used in profiles.
+-- Reviewing the password verification function helps ensure that it enforces strong password policies as per security best practices.
+
+SELECT OWNER, NAME, TYPE, LINE, replace(TEXT, chr(10), '') as TEXT FROM DBA_SOURCE 
+WHERE owner = 'SYS' AND name IN (SELECT REPLACE(limit, chr(10)) FROM dba_profiles WHERE resource_name = 'PASSWORD_VERIFY_FUNCTION') 
+ORDER BY NAME, LINE;
+
+-- This query lists users who have default passwords, which is a significant security risk.
+-- Users with default passwords should change their passwords immediately to prevent unauthorized access.
+
+SELECT * FROM DBA_USERS_WITH_DEFPWD;
+
+-- This query lists all role privileges granted to users and roles.
+-- Regularly auditing role privileges helps ensure that users have only the necessary permissions, following the principle of least privilege.
+
+SELECT * FROM DBA_ROLE_PRIVS;
+
+-- This query lists all system privileges granted to users and roles.
+-- System privileges grant powerful database-wide operations, so they should be granted sparingly and only to trusted users.
+
+SELECT * FROM DBA_SYS_PRIVS;
+
+-- This query lists users who have SYSDBA or SYSOPER privileges.
+-- These privileges allow for full control over the database and should be restricted to a minimal number of highly trusted users.
+
+SELECT sysdba, sysoper FROM V$PWFILE_USERS;
