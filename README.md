@@ -38,4 +38,4 @@ In the `vulnerability-assessment/` folder, you will find:
 1. **Clone the Repository**:
    Clone the repository to your local machine:
    ```bash
-   git clone https://github.com/0xFDoX/IT-assurance.git
+   git clone https://github.com/OxFDoX/IT-assurance.git
