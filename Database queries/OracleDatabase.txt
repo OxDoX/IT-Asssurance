@@ -1,0 +1,24 @@
+
+SELECT * FROM V$PARAMETER
+WHERE name = 'os_authent_prefix'
+          OR name = 'remote_os_authent'
+
+
+SELECT * FROM V$PARAMETER
+WHERE name = 'os_roles'
+         OR name = 'remote_os_roles'
+
+
+SELECT * FROM DBA_USERS
+
+SELECT * FROM DBA_PROFILES
+
+SELECT OWNER, NAME, TYPE, LINE, replace(TEXT, chr(10), ‘’) as TEXT FROM DBA_SOURCE WHERE owner = ‘SYS’ AND name IN (SELECT REPLACE(limit, chr(10)) FROM dba_profiles WHERE resource_name = ‘PASSWORD_VERIFY_FUNCTION’) ORDER BY NAME, LINE;
+
+SELECT * FROM DBA_USERS_WITH_DEFPWD
+
+SELECT * FROM DBA_ROLE_PRIVS
+
+SELECT * FROM DBA_SYS_PRIVS 
+
+SELECT sysdba, sysoper FROM V$PWFILE_USERS
