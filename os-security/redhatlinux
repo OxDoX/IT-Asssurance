@@ -1,1 +1,140 @@
+# THIS ARE REDHAT LINUX COMMANDS FOR REVIEWING PROCEDURE
+# This command finds all directories with world-writable permissions and outputs the list to a file. 
+# World-writable directories can be a security risk as they allow any user to modify their contents.
+/usr/bin/find / -type d -perm -2 -exec ls -dlL {} \; > hostname_wwdir.txt
 
+# This command changes the permissions of the output file to be readable and writable only by the owner for security.
+/bin/chmod 600 hostname_wwdir.txt
+
+# This command finds all files with world-writable and executable permissions and outputs the list to a file.
+# World-writable and executable files are a significant security risk as they can be modified and executed by any user.
+/usr/bin/find / -type f -perm -00102 -exec ls -dlL {} \; > hostname_wwfile.txt
+/bin/chmod 600 hostname_wwfile.txt
+
+# This command outputs the contents of the /etc/passwd file, which contains user account information, to a text file for review.
+/bin/cat /etc/passwd > etc_passwd.txt
+
+# This command lists the permissions of the /etc/passwd file.
+# It's important to ensure that this file is properly secured as it contains sensitive user information.
+/bin/ls –l /etc/passwd
+
+# This command outputs the contents of the /etc/group file, which contains group account information, to a text file for review.
+/bin/cat /etc/group > etc_group.txt
+
+# This command lists the permissions of the /etc/group file.
+# Proper permissions should be maintained to protect group information.
+/bin/ls –l /etc/group
+
+# This command lists the permissions of the /etc/shadow file and outputs the result to a text file.
+# The /etc/shadow file contains hashed passwords and should have strict permissions to prevent unauthorized access.
+/bin/ls –l /etc/shadow > etc_shadow.txt
+
+# This command lists the permissions of the /etc/shadow file.
+# The permissions should be set to allow access only to privileged users.
+/bin/ls -l /etc/shadow
+
+# This command outputs the contents of the /var/log/secure file, which contains security-related logging information, to a text file for review.
+/bin/cat /var/log/secure > hostname_secure_log.txt
+
+# This command lists the permissions of the /etc/shadow file and outputs the result to a text file.
+# Again, it's crucial to ensure that this file is properly secured.
+/bin/ls –l /etc/shadow  > hostname_perm_shadowpasswd.txt
+
+# This command checks the configuration of the Red Hat Network Service Daemon (rhnsd), which is used for automatic updates.
+chkconfig --list rhnsd
+
+# This command lists the root user's crontab entries that contain the word 'aide', which is a file integrity monitoring tool.
+crontab -u root -l | grep aide 
+
+# This command searches for 'aide' in cron directories and the crontab file to ensure that the file integrity checks are scheduled.
+grep -r aide /etc/cron.* /etc/crontab
+
+# This command checks if the AIDE package is installed, which is important for file integrity monitoring.
+rpm -q aide
+
+# This command checks if NX (No eXecute) protection is disabled, which is a hardware-based security feature to prevent code execution from data pages.
+[[ -n $(grep noexec[0-9]*=off /proc/cmdline) || -z $(grep -E -i ' (pae|nx) ' /proc/cpuinfo) || -n $(grep '\sNX\s.*\sprotection:\s' /var/log/dmesg | grep -v active) ]] && echo "NX Protection is disabled"
+
+# This command checks the boot prompt configuration in /etc/sysconfig/init.
+grep "^PROMPT=" /etc/sysconfig/init
+
+# This command checks the configuration for single-user mode in /etc/sysconfig/init.
+grep ^SINGLE /etc/sysconfig/init
+
+# This command checks the current kernel setting for address space layout randomization (ASLR), which is a security feature to prevent exploitation of memory corruption vulnerabilities.
+sysctl kernel.randomize_va_space 
+
+# This command searches for the ASLR setting in sysctl configuration files to ensure it is set to an appropriate value for security.
+grep -Es "^\s*kernel\.randomize_va_space\s*=\s*([0-1]|[3-9]|[1-9][0-9]+)" /etc/sysctl.conf /etc/sysctl.d/* 
+
+# This command checks if the prelink package is installed, which can interfere with AIDE and other file integrity checkers.
+rpm -q prelink
+
+# This command checks for SELinux being disabled in the GRUB configuration, which should be enabled for enhanced security.
+[ -f /boot/efi/EFI/*/grub.conf ] && grep '^\s*kernel' /boot/efi/EFI/*/grub.conf | grep -E '(selinux=0|enforcing=0)' || grep '^\s*kernel' /boot/grub/grub.conf | grep -E '(selinux=0|enforcing=0)'
+
+# This command displays file status information for /etc/motd, which is the message of the day file.
+stat /etc/motd
+
+# This command displays file status information for /etc/issue, which is displayed before the login prompt.
+stat /etc/issue
+
+# This command searches for the 'Enable' setting in the GDM custom configuration file, which relates to the graphical login interface.
+grep -Ei '^\s*Enable\s*=\s*true' /etc/gdm/custom.conf
+
+# This command checks the configuration of the chargen-dgram service, which should be disabled to prevent misuse.
+chkconfig --list chargen-dgram
+
+# This command lists all services and their run levels to review which services are enabled or disabled.
+chkconfig –list
+
+# This command checks the configuration of services managed by xinetd, which is a super-server daemon managing network services.
+chkconfig --list xinetd
+
+# This command displays the contents of /etc/host.allow, which is used for TCP wrappers and controls access to services based on IP addresses or hostnames.
+cat /etc/host.allow
+
+# This command checks if the audit and audit-libs packages are installed, which are essential for the Linux Auditing System.
+rpm -q audit audit-libs
+
+# This command searches for access-related rules in the audit rules configuration, which is important for monitoring critical system events.
+grep access /etc/audit/rules.d/*.rules
+
+# This command lists currently loaded audit rules that include access-related monitoring.
+auditctl -l | grep access
+
+# This script checks for duplicate user IDs (UIDs) in /etc/passwd, which should be unique for each user for security and accountability.
+cut -f3 -d":" /etc/passwd | sort -n | uniq -c | while read x ; do 
+[ -z "$x" ] && break 
+set - $x 
+if [ $1 -gt 1 ]; then 
+users=$(awk -F: '($3 == n) { print $1 }' n=$2 /etc/passwd | xargs) 
+echo "Duplicate UID ($2): $users" 
+fi 
+done
+
+# This script checks for duplicate group IDs (GIDs) in /etc/group, which should be unique for each group for proper access control.
+cut -d: -f3 /etc/group | sort | uniq -d | while read x ; do 
+echo "Duplicate GID ($x) in /etc/group" 
+done
+
+# This command checks the configuration of the pam_cracklib module in the password-auth file, which enforces password complexity rules.
+grep pam_cracklib.so /etc/pam.d/password-auth 
+
+# This command checks the configuration of the pam_cracklib module in the system-auth file, which enforces password complexity rules.
+grep pam_cracklib.so /etc/pam.d/system-auth 
+
+# This command checks the SSH daemon configuration for the ClientAliveInterval setting, which controls how often the server sends keepalive messages to connected clients.
+sshd -T -C user=root -C host="$(hostname)" -C addr="$(grep $(hostname) /etc/hosts | awk '{print $1}')" | grep clientaliveinterval
+
+# This command searches for the ClientAliveInterval setting in the SSH daemon configuration file, which should be set to an appropriate value to prevent idle sessions from remaining open indefinitely.
+grep -Ei '^\s*clientaliveinterval\s+(0|3[0-9][1-9]|[4-9][0-9][0-9]|[1-9][0-9][0-9][0-9]+)\b' /etc/ssh/sshd_config 
+
+# This command searches for the ClientAliveCountMax setting in the SSH daemon configuration file, which determines the number of keepalive messages that can be sent without receiving a response before disconnecting the session.
+grep -Ei '^\s*ClientAliveCountMax\s+(0|[4-9]|[1-9][0-9]+)\b' /etc/ssh/sshd_config
+
+# This command searches for the LoginGraceTime setting in the SSH daemon configuration file, which specifies the time allowed for successful login. It should be set to a low value to prevent unauthorized access attempts over a prolonged period.
+grep -Ei '^\s*LoginGraceTime\s+(0|6[1-9]|[7-9][0-9]|[1-9][0-9][0-9]+|[^1]m)' /etc/ssh/sshd_config
+
+# This command checks the SSH daemon configuration for the UsePAM setting, which enables or disables PAM (Pluggable Authentication Modules) integration. PAM should be used for flexible authentication mechanisms.
+sshd -T -C user=root -C host="$(hostname)" -C addr="$(grep $(hostname) /etc/hosts | awk '{print $1}')" | grep -i usepam
