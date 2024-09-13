@@ -1,0 +1,151 @@
+
+USE master; 
+GO 
+SELECT name,  
+ CAST(value as int) as value_configured, 
+ CAST(value_in_use as int) as value_in_use 
+FROM sys.configurations 
+WHERE name = 'remote admin connections' 
+AND SERVERPROPERTY('IsClustered') = 0;
+
+
+SELECT name 
+FROM sys.databases 
+WHERE is_trustworthy_on = 1 
+AND name != 'msdb'; 
+SELECT name, is_disabled 
+FROM sys.server_principals 
+WHERE sid = 0x01 
+AND is_disabled = 0;
+SELECT name 
+FROM sys.server_principals 
+WHERE sid = 0x01;
+
+
+USE [<production_database_name>]; 
+GO 
+EXEC sp_change_users_login @Action='Report';
+
+SELECT *  
+FROM master.sys.server_permissions 
+WHERE (grantee_principal_id = SUSER_SID(N'public') and state_desc LIKE 
+'GRANT%') 
+AND NOT (state_desc = 'GRANT' and [permission_name] = 'VIEW ANY DATABASE' 
+and class_desc = 'SERVER') 
+AND NOT (state_desc = 'GRANT' and [permission_name] = 'CONNECT' and 
+class_desc = 'ENDPOINT' and major_id = 2) 
+AND NOT (state_desc = 'GRANT' and [permission_name] = 'CONNECT' and 
+class_desc = 'ENDPOINT' and major_id = 3) 
+AND NOT (state_desc = 'GRANT' and [permission_name] = 'CONNECT' and 
+class_desc = 'ENDPOINT' and major_id = 4) 
+AND NOT (state_desc = 'GRANT' and [permission_name] = 'CONNECT' and 
+class_desc = 'ENDPOINT' and major_id = 5);
+
+SELECT pr.[name], pe.[permission_name], pe.[state_desc] 
+FROM sys.server_principals pr 
+JOIN sys.server_permissions pe 
+ON pr.principal_id = pe.grantee_principal_id 
+WHERE pr.name like 'BUILTIN%';
+
+
+
+USE [master] 
+GO 
+SELECT pr.[name] AS LocalGroupName, pe.[permission_name], pe.[state_desc] 
+FROM sys.server_principals pr 
+JOIN sys.server_permissions pe 
+ON pr.[principal_id] = pe.[grantee_principal_id] 
+WHERE pr.[type_desc] = 'WINDOWS_GROUP' 
+AND pr.[name] like CAST(SERVERPROPERTY('MachineName') AS nvarchar) + '%';
+
+SELECT l.[name], 'sysadmin membership' AS 'Access_Method' 
+FROM sys.sql_logins AS l 
+WHERE IS_SRVROLEMEMBER('sysadmin',name) = 1 
+AND l.is_expiration_checked <> 1 
+UNION ALL 
+SELECT l.[name], 'CONTROL SERVER' AS 'Access_Method' 
+FROM sys.sql_logins AS l 
+JOIN sys.server_permissions AS p 
+ON l.principal_id = p.grantee_principal_id 
+WHERE p.type = 'CL' AND p.state IN ('G', 'W') 
+AND l.is_expiration_checked <> 1;  
+
+SELECT name, 
+      CAST(value as int) as value_configured, 
+      CAST(value_in_use as int) as value_in_use 
+      FROM sys.configurations 
+      WHERE name = 'default trace enabled';
+
+SELECT name, 
+      CAST(value as int) as value_configured, 
+      CAST(value_in_use as int) as value_in_use 
+FROM sys.configurations 
+WHERE name = 'xp_cmdshell';
+
+
+select * from sys.syslogins
+
+select * from sys.sql_logins
+
+sp_configure
+
+sp_helpsrvrolemember 'sysadmin'
+
+
+
+sp_helpsrvrolemember 'serveradmin'
+
+
+
+sp_helpsrvrolemember 'securityadmin'
+
+
+sp_helprotect
+
+SELECT SERVERPROPERTY('ProductLevel') as SP_installed,
+SERVERPROPERTY('ProductVersion') as Version;
+
+SELECT name,  
+ CAST(value as int) as value_configured, 
+ CAST(value_in_use as int) as value_in_use 
+FROM sys.configurations  
+WHERE name = 'Ad Hoc Distributed Queries';
+
+SELECT name, 
+      CAST(value as int) as value_configured, 
+      CAST(value_in_use as int) as value_in_use 
+FROM sys.configurations 
+WHERE name = 'clr enabled';
+
+USE [<production_database_name>] 
+GO 
+SELECT name AS Assembly_Name, permission_set_desc 
+FROM sys.assemblies 
+WHERE is_user_defined = 1; 
+GO
+
+select [sid],name 
+from sys.database_principals
+
+
+
+
+
+
+
+select p.name,p.sid
+from sys.database_principals p
+where p.type in ('G','S','U')
+and p.sid not in (select sid from sys.server_principals)
+and p.name not in (
+    'dbo',
+    'guest',
+    'INFORMATION_SCHEMA',
+    'sys',
+    'MS_DataCollectorInternalUser'
+) ;
+
+
+
+
+
